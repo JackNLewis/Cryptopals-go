@@ -6,8 +6,19 @@ import (
 
 var (
 
+	/*
+	State holds the 2d array of a 128 bit block with column major ordering
+	*/
 	state [][]byte
 	
+	/*
+	Key Length (Nk words)
+	*/
+	Nk = 4
+
+	/*
+	Block Size (Nb words)
+	*/
 	Nb = 4
 )
 
@@ -28,13 +39,63 @@ func EncryptBlock(plaintext, key []byte) []byte{
 	key_expanded := KeySchedule([]byte(key))
 
 	round_key := key_expanded[0:16]
-	fmt.Printf("%x\n",round_key)
 	printState(state)
 	AddRoundKey(state, round_key)
+	printState(state)
+	SubBytesState(state)
+	printState(state)
+	ShiftRows(state)
 	printState(state)
 	return plaintext
 }
 
+
+
+/*
+Shift Rows
+*/
+func ShiftRows(state [][]byte){
+	//state is 2d array of dimensions m x n
+	m := len(state)
+	n := len(state[0])
+	offset := 1
+	temp := make([]byte,m)
+	for row:=1;row<m;row++{
+		for i:=0;i<offset;i++{
+			temp[i] = state[row][i]
+		}
+		for i:=0;i<n-offset;i++{
+			state[row][i] = state[row][i+offset]
+		}
+		for i:=0;i<offset;i++{
+			state[row][(n-offset)+i] = temp[i]
+		}
+		offset++
+	}
+}
+
+/*
+Mix Rows
+*/
+func MixRows(state [][]byte){
+
+}
+
+
+/*
+SubBytesState applies SubByte() to each byte in the state
+*/
+func SubBytesState(state [][]byte){
+	for i:=0;i<len(state);i++{
+		for j:=0;j<len(state);j++{
+			state[i][j] = SubByte(state[i][j])
+		}
+	}
+}
+
+/*
+AddRoundKey adds the round key to the state
+*/
 func AddRoundKey(state [][]byte, roundkey []byte){
 	for i:=0; i<len(state); i++{ 
 		for j:=0;j<len(state[0]);j++{
